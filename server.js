@@ -6,7 +6,7 @@ const crypto = require("crypto");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-app.use(express.static("public"));
+app.use(express.static(__dirname));
 
 const rooms = new Map();
 const COLORS = ["แดง", "น้ำเงิน", "เขียว", "เหลือง"];
