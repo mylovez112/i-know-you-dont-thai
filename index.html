@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>I Know… You Don't</title>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--felt:#0f4d3f;--felt2:#0a3a30;--wood:#5a3a22;--ivory:#fff8ea;--brass:#e6b350;--wine:#7a1f3d;--w:92px;--h:132px}
+*{box-sizing:border-box;margin:0}
+body{font-family:Kanit,system-ui,sans-serif;color:var(--ivory);min-height:100vh;background:#2a1a10 repeating-linear-gradient(90deg,#33200f 0 6px,#2a1a10 6px 14px);display:flex;justify-content:center;padding:14px}
+#app{width:100%;max-width:1100px;display:flex;flex-direction:column;gap:12px}
+.table{border:10px solid var(--wood);border-radius:28px;box-shadow:0 0 0 3px var(--brass),0 20px 50px #000a,inset 0 0 90px #000a;background:radial-gradient(ellipse at 50% 40%,#1a7a63,var(--felt) 55%,var(--felt2));padding:18px;position:relative}
+h1{font-size:clamp(28px,6vw,52px);font-weight:800;letter-spacing:-.02em;text-align:center;color:var(--brass);text-shadow:0 3px 0 #0006}
+h1 small{display:block;font-size:.38em;font-weight:400;color:var(--ivory);opacity:.8}
+.panel{max-width:420px;margin:26px auto;display:flex;flex-direction:column;gap:12px}
+input{font:inherit;padding:12px 14px;border-radius:12px;border:2px solid #0004;background:var(--ivory);color:#222;width:100%;text-align:center}
+button{font:inherit;font-weight:700;padding:12px 18px;border:0;border-radius:12px;background:var(--brass);color:#3a2205;cursor:pointer;box-shadow:0 4px 0 #9a7424;transition:.12s}
+button:hover{transform:translateY(-2px)}button:active{transform:translateY(2px);box-shadow:0 1px 0 #9a7424}
+button.alt{background:#ffffff1f;color:var(--ivory);box-shadow:0 4px 0 #0005}button:disabled{opacity:.4;pointer-events:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center}
+.code{font-size:34px;font-weight:800;letter-spacing:.2em;color:var(--brass);background:#0005;border-radius:14px;padding:6px 20px}
+.seats{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:6px 0 14px}
+.seat{display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.85;font-size:14px}
+.av{width:52px;height:52px;border-radius:50%;background:#ffffff22;display:grid;place-items:center;font-size:22px;font-weight:700;border:3px solid #ffffff44;position:relative}
+.seat.turn .av{border-color:var(--brass);animation:pulse 1.4s infinite;background:#e6b35044}
+.seat.off{opacity:.35}.badge{position:absolute;right:-8px;bottom:-6px;background:var(--wine);border-radius:99px;font-size:12px;padding:1px 7px;border:2px solid var(--ivory)}
+@keyframes pulse{50%{box-shadow:0 0 0 9px #e6b35022}}
+.board{display:flex;align-items:center;gap:18px;min-height:calc(var(--h) + 40px);background:#0003;border-radius:20px;padding:14px 18px;border:2px dashed #ffffff33}
+.line{display:flex;overflow-x:auto;padding:14px 6px;flex:1;scrollbar-width:thin}
+.line .card{margin-left:-20px;flex:none}.line .card:first-child{margin-left:0}
+.pile{position:relative;flex:none;text-align:center;font-size:13px}.back{width:var(--w);height:var(--h);border-radius:12px;border:4px solid var(--ivory);background:repeating-conic-gradient(var(--wine) 0 25%,#9a2c52 0 50%) 0 0/16px 16px;box-shadow:2px 2px 0 #0005,5px 5px 0 #0004,8px 8px 0 #0003}
+.card{width:var(--w);height:var(--h);border-radius:12px;border:4px solid var(--c);background:linear-gradient(160deg,#fffdf6,#f1e4c6);color:var(--c);position:relative;box-shadow:0 6px 14px #0006;user-select:none;cursor:default}
+.card .n{position:absolute;left:7px;top:2px;font-size:22px;font-weight:800;-webkit-text-stroke:.7px #0006}.card .n.r{left:auto;right:7px;top:auto;bottom:2px;transform:rotate(180deg)}
+.card .an{position:absolute;inset:26px 8px;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;line-height:1.05;font-size:calc(var(--w) * .3);border-radius:16px;background:color-mix(in srgb,var(--c) 18%,transparent)}.an i{font-style:normal}.an.n1{font-size:calc(var(--w) * .46)}.an.n5{font-size:calc(var(--w) * .22)}.an.n6,.an.n7{font-size:calc(var(--w) * .16)}.an.n8,.an.n9,.an.n10{font-size:calc(var(--w) * .135)}
+.modal{position:fixed;inset:0;display:grid;place-items:center;background:#000a;z-index:25;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}.mbox{background:linear-gradient(#1b5a47,#0f3a2f);border:3px solid var(--brass);border-radius:22px;padding:22px;width:min(520px,92vw);text-align:center;box-shadow:0 20px 60px #000}.mbox h3{color:var(--brass);font-size:26px}.mbox .rules{grid-template-columns:1fr;margin:14px 0}.mbox .rules button{font-size:16px;padding:13px}.seat small{opacity:.8;font-size:12px}
+.sh{position:absolute;right:8px;top:8px;width:20px;height:20px;background:var(--c);border:1px solid #0005}
+.sh.o{border-radius:50%}.sh.t{clip-path:polygon(50% 0,100% 100%,0 100%)}.sh.q{border-radius:2px}.sh.s{clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+.land{animation:land .7s cubic-bezier(.2,1.3,.4,1) backwards}
+@keyframes land{from{transform:translateY(260px) rotate(-14deg) scale(1.25);opacity:0}60%{opacity:1}}
+.deal{animation:deal .6s cubic-bezier(.2,.9,.3,1) backwards}
+@keyframes deal{from{transform:translate(-120px,-300px) rotate(200deg) scale(.5);opacity:0}}
+.hand{display:flex;justify-content:center;padding:34px 20px 10px;min-height:calc(var(--h) + 60px)}
+.hand .card{margin-left:-26px;cursor:pointer;transform:rotate(var(--r)) translateY(var(--y));transition:transform .25s cubic-bezier(.2,1.2,.4,1)}
+.hand .card:first-child{margin-left:0}.hand .card:hover{transform:rotate(0) translateY(-22px);z-index:5}
+.hand .card.sel{transform:rotate(0) translateY(-38px);z-index:6;box-shadow:0 0 0 4px var(--brass),0 14px 24px #000a}
+.hand.mine .card{cursor:pointer}.hand.wait .card{filter:saturate(.7) brightness(.85)}
+.card u{position:absolute;left:50%;top:-14px;translate:-50% 0;background:var(--brass);color:#3a2205;border-radius:50%;width:26px;height:26px;display:grid;place-items:center;font-size:14px;text-decoration:none;font-weight:800}
+.shake{animation:shake .45s}@keyframes shake{25%{translate:-10px}75%{translate:10px}}
+.msg{text-align:center;font-size:17px;min-height:26px;margin:4px 0}.msg b{color:var(--brass)}
+.secret{background:#0006;border:2px solid var(--brass);border-radius:14px;padding:8px 14px;text-align:center;margin-bottom:10px}
+.rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px;margin:12px 0}
+.rules button{font-size:14px;padding:9px;background:#fff2;color:var(--ivory);box-shadow:none}.rules button.on{background:var(--brass);color:#3a2205}
+.log{font-size:13px;opacity:.85;text-align:center;line-height:1.6;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:28px;translate:-50% 0;background:var(--ivory);color:#222;padding:10px 20px;border-radius:99px;font-weight:700;box-shadow:0 8px 24px #000a;opacity:0;pointer-events:none;transition:.3s}#toast.show{opacity:1}
+.win{position:absolute;inset:0;background:#000c;border-radius:18px;display:grid;place-items:center;text-align:center;padding:20px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}@keyframes pop{from{scale:.6;opacity:0}}
+.win h2{font-size:clamp(28px,6vw,46px);color:var(--brass)}
+@media(max-width:640px){:root{--w:68px;--h:98px}.table{padding:10px;border-width:6px}.card .n{font-size:16px}.hand .card{margin-left:-34px}.board{gap:8px;padding:8px}.sh{width:14px;height:14px}.card .an{inset:20px 6px}}
+select{font:inherit;padding:10px;border-radius:12px;border:0;background:var(--ivory);color:#222}
+.dock{position:sticky;bottom:8px;margin-top:12px;background:#000b;border:2px solid var(--brass);border-radius:18px;padding:8px 12px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;justify-content:center;z-index:20}
+.mus{display:flex;align-items:center;gap:8px}.mus button{padding:6px 12px}.mus input{width:90px;padding:0}
+#emos button{background:none;box-shadow:none;padding:2px 5px;font-size:24px}#emos button:hover{transform:scale(1.35) rotate(-8deg)}
+.fe{position:fixed;bottom:80px;z-index:30;text-align:center;pointer-events:none;animation:fe 2.6s ease-out forwards}.fe span{font-size:48px;display:block}.fe small{background:#000a;padding:1px 9px;border-radius:9px;font-size:12px;color:#fff}
+@keyframes fe{to{transform:translateY(-62vh) rotate(14deg) scale(1.3);opacity:0}}
+.guide{position:fixed;top:0;right:0;height:100%;width:min(370px,92vw);background:#1b120a;border-left:3px solid var(--brass);padding:18px;overflow:auto;z-index:40;transform:translateX(105%);transition:transform .35s cubic-bezier(.2,.9,.3,1);font-size:15px;line-height:1.65;box-shadow:-10px 0 40px #000a}
+.guide.open{transform:none}.guide h3{color:var(--brass);font-size:24px}.guide h4{color:var(--brass);margin:14px 0 2px}.guide p{opacity:.92}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head><body>
+<div style="width:100%;max-width:1100px"><main id="app"></main><div class="dock"><div class="mus"><button class="alt" onclick="togMusic()" id="mb">🎵</button><button class="alt" onclick="sfxOn=!sfxOn;this.textContent=sfxOn?'🔊':'🔈'" title="เสียงเอฟเฟกต์">🔊</button><button onclick="$('#guide').classList.add('open')">📖 วิธีเล่น</button><input type="range" min="0" max="100" value="50" oninput="setVol(this.value)" aria-label="ระดับเสียงเพลง"></div><div class="row" id="emos"></div></div></div><aside id="guide" class="guide"><button class="alt" onclick="$('#guide').classList.remove('open')" style="float:right;padding:6px 12px">✕ ปิด</button>
+<h3>📖 วิธีเล่น</h3>
+<h4>เป้าหมาย</h4><p>มี <b>กฎลับ</b> ซ่อนอยู่ว่าไพ่แบบไหนวางลงแถวได้ ให้สังเกตไพ่ในแถวและผลการวางของทุกคน แล้ว <b>ทิ้งไพ่ในมือให้หมดก่อน และทายกฎให้ถูก</b></p>
+<h4>บทบาท</h4><p>🤖 <b>บอท</b> เป็น Rule Keeper ถือกฎลับและตัดสินไพ่ให้ทุกคนเท่ากัน ทุกคนในห้องเป็นผู้เล่นหมด ส่วนเจ้าของห้อง (👑) แค่เป็นคนกดเริ่มเกม บอท<b>สุ่มกฎลับ</b>ให้ทุกรอบ (สุ่มจากกฎระดับกลางถึงยาก ทุกข้อเท่าๆ กัน)</p>
+<h4>ไพ่</h4><p>ไพ่ทุกใบมี <b>สี</b> · <b>เลข 1–10</b> (= จำนวนสัตว์บนไพ่) · <b>สัตว์</b> · <b>รูปทรง</b> (มุมขวาบน) ให้สังเกต แต่ละคนได้ 7 ใบ และมีไพ่ใบแรกในแถวที่ <b>ผ่านกฎ</b> ให้เป็นเบาะแส</p>
+<h4>ในตาของคุณ เลือกทำอย่างใดอย่างหนึ่ง</h4>
+<p>🃏 <b>วางไพ่</b> คลิกไพ่ในมือ 1 ใบหรือหลายใบ (เลขที่โชว์คือลำดับที่จะวาง) แล้วกด "วางไพ่"<br>✅ ผ่านทุกใบ = ไพ่ไปอยู่ในแถว มือคุณเบาลง<br>❌ มีใบที่ไม่ผ่าน = เก็บไพ่คืนทั้งหมด (ไม่เสียอะไร แต่ตาคุณหมดไป และคุณได้เบาะแสว่าอะไรไม่ใช่)</p>
+<p>🔄 <b>เปิดไพ่ทั้งมือ</b> ใช้เมื่อมั่นใจว่า <b>ไม่มีไพ่ในมือใบไหนผ่านเลย</b><br>• ถูก: เปลี่ยนมือใหม่ และได้ไพ่ <b>น้อยลง 1 ใบ</b> (ถ้าเหลือ 0 ใบ ได้ทายกฎทันที)<br>• ผิด (จริงๆ มีใบที่ผ่าน): ระบบลงใบที่ผ่านให้ 1 ใบ จั่วใหม่ 1 ใบ และ <b>จั่วเพิ่มอีก 1 ใบ</b></p>
+<h4>ทายกฎและชนะ</h4><p>เมื่อไพ่หมดมือ จะได้ <b>ทายกฎ</b> โดยเลือกจาก 3 ตัวเลือก (กฎจริง 1 ข้อ กับตัวหลอก 2 ข้อที่ใกล้เคียงกับกฎจริงมากที่สุด) ถ้าถูก <b>ชนะ</b> และได้แต้มชนะ (แต้มชนะ/แพ้สะสมโชว์ใต้ชื่อทุกคน) ถ้าผิด จะส่งต่อให้ <b>คนถัดไปทาย</b> ไปเรื่อยๆ จนกว่าจะมีคนทายถูก</p>
+<h4>เคล็ดลับ</h4><p>• ดูว่าไพ่ในแถวมีอะไรเหมือนกัน และอะไรที่ไม่เคยโผล่<br>• ดูไพ่ที่คนอื่นวางไม่ผ่านด้วย เป็นเบาะแสที่ดีมาก<br>• กฎบางข้อดู <b>ใบก่อนหน้า</b> เช่น สีต้องไม่ซ้ำ หรือเลขต้องเพิ่มขึ้น ลำดับการวางจึงสำคัญ<br>• กดอีโมจิแซวเพื่อนได้ตลอด 😎</p></aside>
+<div id="toast"></div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const s=io(),$=q=>document.querySelector(q),seen=new Set();
+let lv=1,bd="",S=null,sel=[],gsel=null,name=localStorage.getItem("nm")||"";
+const COL={"แดง":"#d62839","น้ำเงิน":"#1d5bd6","เขียว":"#1f9d55","เหลือง":"#d99a00"};
+const ANI={"แมว":"🐱","กบ":"🐸","จิ้งจอก":"🦊","แพนด้า":"🐼"};
+const SH={"วงกลม":"o","สามเหลี่ยม":"t","สี่เหลี่ยม":"q","ดาว":"s"};
+function toast(t){const e=$("#toast");e.textContent=t;e.className="show";clearTimeout(toast.t);toast.t=setTimeout(()=>e.className="",2200)}
+function card(c,extra="",style="",n=""){return `<div class="card ${extra}" data-id="${c.id}" style="--c:${COL[c.color]};${style}">${n}<b class="n">${c.number}</b><i class="sh ${SH[c.shape]}"></i><span class="an n${c.number}">${`<i>${ANI[c.icon]}</i>`.repeat(c.number)}</span><b class="n r">${c.number}</b></div>`}
+function emit(ev,d,fn){s.emit(ev,d,r=>{if(!r.ok)return toast(r.error);fn&&fn(r)})}
+function create(){name=$("#nm").value.trim();localStorage.setItem("nm",name);emit("create",{name})}
+function join(){name=$("#nm").value.trim();localStorage.setItem("nm",name);emit("join",{name,code:$("#cd").value})}
+function pick(id){const i=sel.indexOf(id);i<0?sel.push(id):sel.splice(i,1);render()}
+function play(){emit("play",{ids:sel},r=>{sel=[];toast(r.accepted?"✅ ผ่าน!":"❌ ไม่ผ่าน ต้องเก็บไพ่คืน");if(!r.accepted){const h=$(".hand");h&&h.classList.add("shake")}})}
+function trade(){if(confirm("เปิดไพ่ทั้งมือ? ใช้เมื่อคิดว่าไม่มีใบไหนผ่านกฎเลย"))emit("trade",{},r=>{sel=[];toast(r.accepted?"🔄 เปลี่ยนมือใหม่ (ลดลง 1 ใบ)":"มีไพ่ที่ผ่านอยู่! ลงให้ 1 ใบ จั่วใหม่ 1 ใบ และจั่วเพิ่มอีก 1 ใบ")})}
+function guess(){emit("guess",{id:gsel},r=>{gsel=null;toast(r.accepted?"🏆 ทายถูก!":"🤔 ทายผิด! ส่งต่อให้คนถัดไปทาย")})}
+function home(){$("#app").innerHTML=`<div class="table"><h1>I KNOW… YOU DON'T<small>เกมสืบหากฎลับ — ใครทายกฎได้ก่อนชนะ</small></h1><div class="panel">
+<input id="nm" placeholder="ชื่อของคุณ" maxlength="16" value="${name}">
+<button onclick="create()">สร้างห้องใหม่</button>
+<div class="row" style="flex-wrap:nowrap"><input id="cd" placeholder="รหัสห้อง" maxlength="6" style="text-transform:uppercase"><button class="alt" onclick="join()">เข้าห้อง</button></div></div></div>`}
+function render(){
+ if(!S)return home();
+ const keeper=false,own=S.me===S.hostId,my=S.turn===S.me,P=id=>S.players.find(p=>p.id===id);
+ sel=sel.filter(id=>S.hand.some(c=>c.id===id));
+ const seats=S.players.map(p=>`<div class="seat ${p.id===S.turn&&S.phase!=="lobby"?"turn":""} ${p.online?"":"off"}"><div class="av">${p.name[0]}${S.phase==="lobby"?"":`<span class="badge">${p.n}</span>`}</div>${p.name}${p.id===S.hostId?" 👑":""}<small>🏆${p.w} · 💔${p.l}</small></div>`).join("");
+ let body="";
+ if(S.phase==="lobby"){body=`<div class="msg">ส่งรหัสห้องให้เพื่อน — <b>🤖 บอท</b> เป็น Rule Keeper (สุ่มกฎลับและตัดสินไพ่ให้ทุกคน) ${own?"กดเริ่มเกมได้เลย":"รอ 👑 เจ้าของห้องกดเริ่มเกม"}</div>
+ <div class="row"><button ${own?"":"disabled"} onclick="emit('start')">${own?"เริ่มเกม":"รอเจ้าของห้องเริ่มเกม"}</button></div>`}
+ else{
+  const line=S.line.map(c=>{const k="l"+c.id,n=!seen.has(k);seen.add(k);return card(c,n?"land":"")}).join("");
+  const hand=S.hand.map((c,i,a)=>{const k="h"+c.id,n=!seen.has(k);seen.add(k);const m=(a.length-1)/2,o=i-m,x=sel.indexOf(c.id);
+   return card(c,(n?"deal ":"")+(x>=0?"sel":""),`--r:${o*(a.length>7?3:4)}deg;--y:${Math.abs(o)*(Math.abs(o)*1.2)}px;${n?`animation-delay:${i*.07}s`:""}`,x>=0?`<u>${x+1}</u>`:"")}).join("");
+  const status=keeper?`ตาของ <b>${P(S.turn)?.name||"-"}</b>`:S.phase==="guess"?(my?"<b>ถึงตาคุณทายกฎ!</b> เลือกกฎที่คิดว่าใช่":`<b>${P(S.turn).name}</b> กำลังทายกฎ…`):my?"<b>ตาของคุณ</b> — เลือกไพ่ (ลำดับที่กดคือลำดับที่วาง)":`รอ <b>${P(S.turn)?.name}</b> เล่น…`;
+  body=`${keeper?`<div class="secret">🔒 กฎลับของคุณ: <b>${S.rule}</b> <small>(ระบบตัดสินไพ่ให้อัตโนมัติ)</small></div>`:""}
+  <div class="board"><div class="pile"><div class="back"></div>กองจั่ว ${S.deck}</div><div class="line" id="line">${line}</div></div>
+  <div class="msg">${status}</div>
+  ${keeper?"":`<div class="hand ${my?"mine":"wait"}">${hand}</div>`}
+  ${!keeper&&my&&S.phase==="playing"?`<div class="row"><button ${sel.length?"":"disabled"} onclick="play()">วางไพ่ ${sel.length||""} ใบ</button><button class="alt" onclick="trade()">เปิดไพ่ทั้งมือ</button></div>`:""}
+  ${S.phase==="guess"&&my?`<div class="modal"><div class="mbox"><h3>🕵️ ทายกฎลับ!</h3><p>เลือกกฎที่คิดว่าใช่ (ผิดแล้วส่งต่อให้คนถัดไป)</p><div class="rules">${S.choices.map(r=>`<button class="${gsel===r.id?"on":""}" onclick="gsel='${r.id}';render()">${r.label}</button>`).join("")}</div><div class="row"><button ${gsel?"":"disabled"} onclick="guess()">ยืนยันคำตอบ</button></div></div></div>`:""}
+  <div class="log">${S.log.join("<br>")}</div>`}
+ const win=S.phase==="ended"?`<div class="win"><div><h2>🏆 ${S.winner} ชนะ!</h2><p style="margin:10px 0 18px;font-size:20px">กฎลับคือ “${S.rule}”</p><div style="margin:0 0 16px;line-height:1.8">${[...S.players].sort((a,b)=>b.w-a.w).map(p=>`<div>${p.name}: 🏆 ชนะ ${p.w} · 💔 แพ้ ${p.l}</div>`).join("")}</div><button onclick="emit('restart')">เล่นอีกรอบ</button></div></div>`:"";
+ $("#app").innerHTML=`<div class="table"><div class="row" style="margin-bottom:8px"><span class="code">${S.code}</span></div><div class="seats">${seats}</div>${body}${win}</div>`;
+ const l=$("#line");if(l)l.scrollLeft=l.scrollWidth;
+}
+document.addEventListener("click",e=>{const c=e.target.closest(".hand.mine .card");if(c&&S.phase==="playing")pick(+c.dataset.id)});
+s.on("state",d=>{if(S&&S.phase==="lobby"&&d.phase==="playing")seen.clear();try{sfxDiff(S,d)}catch(e){}S=d;render()});
+// เสียงเอฟเฟกต์ (สังเคราะห์ด้วย WebAudio)
+let sx,sfxOn=true;
+function noise(t,d,f,type,g){const c=sx,b=c.createBuffer(1,c.sampleRate*d,c.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=(Math.random()*2-1)*(1-i/a.length);const n=c.createBufferSource(),fl=c.createBiquadFilter(),e=c.createGain();n.buffer=b;fl.type=type;fl.frequency.value=f;e.gain.value=g;n.connect(fl);fl.connect(e);e.connect(c.destination);n.start(t)}
+function tone(f,t,d,g,type="sine",f2){const c=sx,o=c.createOscillator(),e=c.createGain();o.type=type;o.frequency.setValueAtTime(f,t);f2&&o.frequency.exponentialRampToValueAtTime(f2,t+d);e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(e);e.connect(c.destination);o.start(t);o.stop(t+d)}
+function sfx(k,n=1){if(!sfxOn)return;sx=sx||new AudioContext();sx.resume();const t=sx.currentTime;
+ if(k==="place")for(let i=0;i<n;i++){noise(t+i*.13,.09,1800,"bandpass",.8);tone(150,t+i*.13,.12,.5,"sine",55)}
+ if(k==="deal")for(let i=0;i<5;i++)noise(t+i*.07,.12,4000,"highpass",.25);
+ if(k==="fail"){tone(220,t,.25,.25,"triangle",140);tone(165,t+.2,.35,.25,"triangle",100)}
+ if(k==="ding"){tone(880,t+.35,.35,.2);tone(1320,t+.45,.45,.15)}
+ if(k==="pop")tone(500,t,.14,.3,"sine",1000);
+ if(k==="win")[523,659,784,1047,1319].forEach((f,i)=>tone(f,t+i*.12,.6,.22,"triangle"))}
+function sfxDiff(a,b){if(!a||b.phase==="lobby")return;const play=a.phase!=="lobby";
+ if(play&&b.line.length>a.line.length)sfx("place",Math.min(b.line.length-a.line.length,4));
+ if(b.hand.length>a.hand.length||(!play&&b.hand.length))sfx("deal");
+ if(play&&b.turn===b.me&&a.turn!==b.me&&b.phase==="playing")sfx("ding");
+ const l=b.log[b.log.length-1];if(play&&l!==a.log[a.log.length-1]&&/❌|ทายผิด/.test(l||""))sfx("fail");
+ if(b.phase==="ended"&&a.phase!=="ended")sfx("win")}
+const EM=["😂","🤣","😎","🤔","😱","😭","🥳","🔥","👏","👍","👎","❤️","🤡","💀","🙈","🎉"];
+$("#emos").innerHTML=EM.map(e=>`<button onclick="s.emit('emo','${e}')">${e}</button>`).join("");
+s.on("emo",d=>{sfx("pop");const x=document.createElement("div");x.className="fe";x.style.left=8+Math.random()*80+"vw";x.innerHTML=`<span>${d.e}</span><small>${d.n}</small>`;document.body.appendChild(x);setTimeout(()=>x.remove(),2700)});
+// เพลงคลอ: อาร์เพจจิโอเบาๆ สังเคราะห์ด้วย WebAudio (ไม่ต้องมีไฟล์เสียง)
+let ac,mg,on=true,vol=.5;
+function setVol(v){vol=v/100;if(mg)mg.gain.value=vol*.4}
+function togMusic(){on=!on;$("#mb").textContent=on?"🎵":"🔇";if(ac)on?ac.resume():ac.suspend();else if(on)startMusic()}
+function startMusic(){
+ ac=new AudioContext();mg=ac.createGain();mg.gain.value=vol*.4;
+ const lp=ac.createBiquadFilter();lp.frequency.value=1600;const dl=ac.createDelay();dl.delayTime.value=.42;const fb=ac.createGain();fb.gain.value=.45;
+ mg.connect(lp);lp.connect(ac.destination);lp.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(ac.destination);
+ const P=[[220,262,330,392],[175,220,262,349],[262,330,392,523],[196,247,294,392]],pat=[0,1,2,3,2,1,3,2];let t=ac.currentTime+.1,i=0;
+ const note=(f,t,d,g)=>{const o=ac.createOscillator(),e=ac.createGain();o.type="triangle";o.frequency.value=f;e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.04);e.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(e);e.connect(mg);o.start(t);o.stop(t+d)};
+ (function sch(){while(t<ac.currentTime+3){const c=P[Math.floor(i/8)%4];note(c[pat[i%8]],t,1.8,.5);if(i%8===0)note(c[0]/2,t,3.2,.6);if(i%8===4&&Math.random()<.6)note(c[3]*2,t+.25,1.4,.25);t+=.62;i++}setTimeout(sch,800)})()}
+addEventListener("pointerdown",()=>{if(!ac&&on)startMusic()},{once:true});
+home();
+</script></body></html>
