@@ -32,6 +32,7 @@ button.alt{background:#ffffff1f;color:var(--ivory);box-shadow:0 4px 0 #0005}butt
 .card .n{position:absolute;left:7px;top:2px;font-size:22px;font-weight:800;-webkit-text-stroke:.7px #0006}.card .n.r{left:auto;right:7px;top:auto;bottom:2px;transform:rotate(180deg)}
 .card .an{position:absolute;inset:26px 8px;display:flex;flex-wrap:wrap;justify-content:center;align-content:center;line-height:1.05;font-size:calc(var(--w) * .3);border-radius:16px;background:color-mix(in srgb,var(--c) 18%,transparent)}.an i{font-style:normal}.an.n1{font-size:calc(var(--w) * .46)}.an.n5{font-size:calc(var(--w) * .22)}.an.n6,.an.n7{font-size:calc(var(--w) * .16)}.an.n8,.an.n9,.an.n10{font-size:calc(var(--w) * .135)}
 .modal{position:fixed;inset:0;display:grid;place-items:center;background:#000a;z-index:25;animation:pop .35s cubic-bezier(.2,1.4,.4,1)}.mbox{background:linear-gradient(#1b5a47,#0f3a2f);border:3px solid var(--brass);border-radius:22px;padding:22px;width:min(520px,92vw);text-align:center;box-shadow:0 20px 60px #000}.mbox h3{color:var(--brass);font-size:26px}.mbox .rules{grid-template-columns:1fr;margin:14px 0}.mbox .rules button{font-size:16px;padding:13px}.seat small{opacity:.8;font-size:12px}
+.modal{inset:auto;left:50%;top:50%;translate:-50% -50%;background:none;display:block;width:min(520px,92vw)}.modal.fold{top:auto;bottom:84px;translate:-50% 0;width:min(340px,92vw)}.mbox{width:100%}.mbox h3{font-size:22px}.mbox h3 small{font-size:12px;color:var(--ivory);opacity:.85;font-weight:400}.modal.fold .mbox{padding:10px 16px}
 .sh{position:absolute;right:8px;top:8px;width:20px;height:20px;background:var(--c);border:1px solid #0005}
 .sh.o{border-radius:50%}.sh.t{clip-path:polygon(50% 0,100% 100%,0 100%)}.sh.q{border-radius:2px}.sh.s{clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
 .land{animation:land .7s cubic-bezier(.2,1.3,.4,1) backwards}
@@ -78,7 +79,7 @@ select{font:inherit;padding:10px;border-radius:12px;border:0;background:var(--iv
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const s=io(),$=q=>document.querySelector(q),seen=new Set();
-let lv=1,bd="",S=null,sel=[],gsel=null,name=localStorage.getItem("nm")||"";
+let gfold=false,lv=1,bd="",S=null,sel=[],gsel=null,name=localStorage.getItem("nm")||"";
 const COL={"แดง":"#d62839","น้ำเงิน":"#1d5bd6","เขียว":"#1f9d55","เหลือง":"#d99a00"};
 const ANI={"แมว":"🐱","กบ":"🐸","จิ้งจอก":"🦊","แพนด้า":"🐼"};
 const SH={"วงกลม":"o","สามเหลี่ยม":"t","สี่เหลี่ยม":"q","ดาว":"s"};
@@ -113,7 +114,7 @@ function render(){
   <div class="msg">${status}</div>
   ${keeper?"":`<div class="hand ${my?"mine":"wait"}">${hand}</div>`}
   ${!keeper&&my&&S.phase==="playing"?`<div class="row"><button ${sel.length?"":"disabled"} onclick="play()">วางไพ่ ${sel.length||""} ใบ</button><button class="alt" onclick="trade()">เปิดไพ่ทั้งมือ</button></div>`:""}
-  ${S.phase==="guess"&&my?`<div class="modal"><div class="mbox"><h3>🕵️ ทายกฎลับ!</h3><p>เลือกกฎที่คิดว่าใช่ (ผิดแล้วส่งต่อให้คนถัดไป)</p><div class="rules">${S.choices.map(r=>`<button class="${gsel===r.id?"on":""}" onclick="gsel='${r.id}';render()">${r.label}</button>`).join("")}</div><div class="row"><button ${gsel?"":"disabled"} onclick="guess()">ยืนยันคำตอบ</button></div></div></div>`:""}
+  ${S.phase==="guess"&&my?`<div class="modal ${gfold?"fold":""}"><div class="mbox"><h3 onclick="gfold=!gfold;render()" style="cursor:pointer">🕵️ ทายกฎลับ! <small>${gfold?"▲ กดเพื่อเปิด":"▼ กดเพื่อพับ ดูไพ่"}</small></h3>${gfold?"":`<p>เลือกกฎที่คิดว่าใช่ (ผิดแล้วส่งต่อให้คนถัดไป)</p><div class="rules">${S.choices.map(r=>`<button class="${gsel===r.id?"on":""}" onclick="gsel='${r.id}';render()">${r.label}</button>`).join("")}</div><div class="row"><button ${gsel?"":"disabled"} onclick="guess()">ยืนยันคำตอบ</button></div>`}</div></div>`:""}
   <div class="log">${S.log.join("<br>")}</div>`}
  const win=S.phase==="ended"?`<div class="win"><div><h2>🏆 ${S.winner} ชนะ!</h2><p style="margin:10px 0 18px;font-size:20px">กฎลับคือ “${S.rule}”</p><div style="margin:0 0 16px;line-height:1.8">${[...S.players].sort((a,b)=>b.w-a.w).map(p=>`<div>${p.name}: 🏆 ชนะ ${p.w} · 💔 แพ้ ${p.l}</div>`).join("")}</div><button onclick="emit('restart')">เล่นอีกรอบ</button></div></div>`:"";
  $("#app").innerHTML=`<div class="table"><div class="row" style="margin-bottom:8px"><span class="code">${S.code}</span></div><div class="seats">${seats}</div>${body}${win}</div>`;
