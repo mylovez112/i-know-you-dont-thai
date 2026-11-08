@@ -15,19 +15,10 @@ const NUMS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], PAR = [["คี่", 1], ["คู�
 // แนวเดียวกับตัวอย่างในเกมต้นฉบับ: สีเดียว / ห้ามสี / สองสี / เลขคี่ / ตัวละครเฉพาะ / หมวดตัวละคร / ห้ามเลขเดียวกับใบก่อนหน้า
 // ที่เหลือเป็นกฎเพิ่มเติมแนวเดียวกัน (สี เลข สัตว์ รูปทรง การรวมเงื่อนไข และลำดับการวาง)
 const RULES = [
-  ...COLORS.map(x => L(1, "c" + x, `ไพ่สี${x}เท่านั้น`, c => c.color === x)),
-  ...COLORS.map(x => L(1, "nc" + x, `ไพ่ห้ามเป็นสี${x}`, c => c.color !== x)),
-  ...pairs(COLORS).map(([x, y]) => L(1, "p" + x + y, `ไพ่สี${x}หรือสี${y}เท่านั้น`, c => c.color === x || c.color === y)),
-  L(1, "odd", "เลขคี่เท่านั้น", c => c.number % 2 === 1), L(1, "even", "เลขคู่เท่านั้น", c => c.number % 2 === 0),
-  L(1, "many", "ไพ่ต้องมีสัตว์ 3 ตัวขึ้นไป", c => c.number >= 3), L(2, "few", "ไพ่ต้องมีสัตว์ไม่เกิน 2 ตัว", c => c.number <= 2),
-  L(1, "high", "เลข 8–10 เท่านั้น", c => c.number >= 8), L(1, "low", "เลข 1–3 เท่านั้น", c => c.number <= 3),
-  ...NUMS.map(n => L(1, "n" + n, `ไพ่เลข ${n} เท่านั้น`, c => c.number === n)),
+  L(2, "few", "ไพ่ต้องมีสัตว์ไม่เกิน 2 ตัว", c => c.number <= 2),
   ...NUMS.map(n => L(2, "nn" + n, `ไพ่ห้ามเป็นเลข ${n}`, c => c.number !== n)),
   L(2, "mid", "เลข 4–7 เท่านั้น", c => c.number >= 4 && c.number <= 7), L(2, "edge", "เลข 1 หรือ 10 เท่านั้น", c => c.number === 1 || c.number === 10),
-  ...ICONS.map(x => L(1, "a" + x, `ไพ่ตัว${x}เท่านั้น`, c => c.icon === x)),
-  ...ICONS.map(x => L(1, "na" + x, `ไพ่ห้ามเป็นตัว${x}`, c => c.icon !== x)),
   ...pairs(ICONS).map(([x, y]) => L(2, "ap" + x + y, `ไพ่ตัว${x}หรือตัว${y}เท่านั้น`, c => c.icon === x || c.icon === y)),
-  L(1, "furry", "ไพ่สัตว์มีขนเท่านั้น (ไม่ใช่กบ)", c => c.icon !== "กบ"),
   ...SHAPES.map(x => L(2, "s" + x, `ไพ่รูป${x}เท่านั้น`, c => c.shape === x)),
   ...SHAPES.map(x => L(2, "ns" + x, `ไพ่ห้ามเป็นรูป${x}`, c => c.shape !== x)),
   ...COLORS.flatMap(x => PAR.map(([n, v]) => L(2, `c${x}${n}`, `ไพ่สี${x} และเลข${n}`, c => c.color === x && c.number % 2 === v))),
@@ -35,9 +26,7 @@ const RULES = [
   ...COLORS.flatMap(x => PAR.map(([n, v]) => L(3, `oc${x}${n}`, `ไพ่สี${x} หรือเลข${n}`, c => c.color === x || c.number % 2 === v))),
   ...ICONS.map(x => L(3, "oa" + x, `ไพ่ตัว${x} หรือเลขมากกว่า 3`, c => c.icon === x || c.number > 3)),
   // ลำดับการวาง: ดูใบก่อนหน้าในแถว
-  L(1, "numd", "เลขต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.number !== p.number)),
   L(2, "nums", "เลขต้องเท่ากับใบก่อนหน้า", (c, p) => has(c, p, () => c.number === p.number)),
-  L(1, "alt", "สีต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.color !== p.color)),
   L(2, "samec", "สีต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.color === p.color)),
   L(2, "ani", "สัตว์ต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.icon !== p.icon)),
   L(2, "sami", "สัตว์ต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.icon === p.icon)),
@@ -137,7 +126,7 @@ io.on("connection", s => {
       const n = p.hand.length - 1; r.deck.unshift(...p.hand); p.hand = []; draw(r, p, n);
       say(r, `🔄 ${p.name} เปิดไพ่ทั้งมือ — ไม่มีใบไหนผ่านจริง! เปลี่ยนมือใหม่เหลือ ${n} ใบ`);
       if (n === 0) toGuess(r, p); else next(r);
-    } else { const i = p.hand.findIndex(c => fits(r, c, last)); r.line.push(...p.hand.splice(i, 1)); draw(r, p, 1); say(r, `🔄 ${p.name} เปิดไพ่ทั้งมือ แต่มีใบที่ผ่านอยู่ — ลงให้ 1 ใบ แล้วจั่วใหม่ 1 ใบ`); next(r); }
+    } else { const i = p.hand.findIndex(c => fits(r, c, last)); r.line.push(...p.hand.splice(i, 1)); draw(r, p, 2); say(r, `🔄 ${p.name} เปิดไพ่ทั้งมือ แต่มีใบที่ผ่านอยู่ — ลงให้ 1 ใบ จั่วใหม่ 1 ใบ และจั่วเพิ่มอีก 1 ใบ`); next(r); }
     cb({ ok: true, accepted: !any });
   }));
 
