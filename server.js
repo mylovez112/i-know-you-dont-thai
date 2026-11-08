@@ -46,7 +46,7 @@ function makeDeck() {
 }
 const code = () => crypto.randomBytes(3).toString("hex").toUpperCase();
 const find = id => [...rooms.values()].find(r => r.players.has(id));
-const order = r => [...r.players.values()]; // ทุกคนเป็นผู้เล่น บอทเป็น Rule Keeper
+const order = r => r.seq ? r.seq.map(id => r.players.get(id)).filter(Boolean) : [...r.players.values()]; // ลำดับเล่น (สุ่มใหม่ทุกรอบ) ทุกคนเป็นผู้เล่น บอทเป็น Rule Keeper
 const say = (r, m) => { r.log.push(m); if (r.log.length > 40) r.log.shift(); };
 const fits = (r, c, p) => r.rule.test(c, p, r.ctx);
 function draw(r, p, n) { for (let i = 0; i < n; i++) { if (!r.deck.length) r.deck = makeDeck(); p.hand.push(r.deck.pop()); } }
@@ -63,7 +63,7 @@ function toGuess(r, p) { // ตัวเลือก 3 ข้อ: กฎจร�
   r.phase = "guess"; say(r, `🃏 ${p.name} ไพ่หมดมือ! ถึงเวลาทายกฎ`);
 }
 function send(r) {
-  const players = [...r.players.values()].map(x => ({ id: x.id, name: x.name, n: x.hand.length, online: x.online, w: x.w, l: x.l }));
+  const players = order(r).map(x => ({ id: x.id, name: x.name, n: x.hand.length, online: x.online, w: x.w, l: x.l }));
   for (const p of r.players.values()) io.to(p.id).emit("state", {
     code: r.code, phase: r.phase, hostId: r.hostId, me: p.id, turn: r.turn, winner: r.winner,
     players, line: r.line, log: r.log.slice(-6), hand: p.hand, deck: r.deck.length,
@@ -93,11 +93,12 @@ io.on("connection", s => {
     const dig = t => [...String(t)].filter(ch => /\d/.test(ch)).map(Number), now = new Date();
     r.ctx = { yr: dig(now.getFullYear()).map(String) };
     const pool = RULES.filter(o => !o.need || o.need(r.ctx));  // สุ่มจากทุกกฎเท่าๆ กัน
+    r.seq = [...r.players.keys()].sort(() => Math.random() - .5); // สุ่มลำดับการเล่นใหม่ทุกรอบ
     r.rule = pool[Math.floor(Math.random() * pool.length)]; r.deck = makeDeck(); r.winner = null; r.winnerId = null; r.log = [];
     const i = r.deck.findIndex(c => fits(r, c, null)); r.line = r.deck.splice(i, 1);
     for (const q of r.players.values()) { q.hand = []; draw(r, q, 7); }
     r.phase = "playing"; r.turn = order(r)[0].id;
-    say(r, `เริ่มเกม! Rule Keeper วางไพ่ใบแรกที่ตรงกับกฎลับแล้ว`); cb({ ok: true });
+    say(r, `เริ่มเกม! ลำดับเล่น: ${order(r).map(x => x.name).join(" → ")}`); cb({ ok: true });
   }));
 
   s.on("play", act((r, p, { ids = [] }, cb) => {
@@ -135,7 +136,7 @@ io.on("connection", s => {
   s.on("restart", act((r, p, d, cb) => {
     if (r.phase !== "ended") return cb({ ok: false });
     if (!r.players.get(r.hostId)?.online) r.hostId = [...r.players.values()].find(x => x.online)?.id || r.hostId; // เจ้าของห้องหลุด → โอนให้คนที่ยังอยู่
-    r.phase = "lobby"; r.line = []; r.rule = null; r.winner = null; r.log = []; r.players.forEach(x => x.hand = []);
+    r.phase = "lobby"; r.seq = null; r.line = []; r.rule = null; r.winner = null; r.log = []; r.players.forEach(x => x.hand = []);
     say(r, "รอบใหม่! บอทยังเป็น Rule Keeper ให้เหมือนเดิม"); cb({ ok: true });
   }));
 
