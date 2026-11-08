@@ -9,39 +9,53 @@ const EMO = "😂🤣😎🤔😱😭🥳🔥👏👍👎❤️🤡💀🙈🎉"
 const L = (lv, id, label, test, need) => ({ lv, id, label, test, need });
 const has = (c, p, f) => !p || f(c, p);
 // test(ไพ่ที่วาง, ใบก่อนหน้า, ctx) — lv = ระดับความยาก 1-5
+const pairs = a => a.flatMap((x, i) => a.slice(i + 1).map(y => [x, y]));
+const NUMS = [1, 2, 3, 4, 5], PAR = [["คี่", 1], ["คู่", 0]];
+// เลขบนไพ่ = จำนวนสัตว์บนไพ่ (lv ใช้จัดกลุ่มเท่านั้น ไม่มีผลต่อการสุ่ม)
+// แนวเดียวกับตัวอย่างในเกมต้นฉบับ: สีเดียว / ห้ามสี / สองสี / เลขคี่ / ตัวละครเฉพาะ / หมวดตัวละคร / ห้ามเลขเดียวกับใบก่อนหน้า
+// ที่เหลือเป็นกฎเพิ่มเติมแนวเดียวกัน (สี เลข สัตว์ รูปทรง การรวมเงื่อนไข และลำดับการวาง)
 const RULES = [
   ...COLORS.map(x => L(1, "c" + x, `ไพ่สี${x}เท่านั้น`, c => c.color === x)),
-  ...SHAPES.map(x => L(1, "s" + x, `ไพ่รูป${x}เท่านั้น`, c => c.shape === x)),
+  ...COLORS.map(x => L(1, "nc" + x, `ไพ่ห้ามเป็นสี${x}`, c => c.color !== x)),
+  ...pairs(COLORS).map(([x, y]) => L(1, "p" + x + y, `ไพ่สี${x}หรือสี${y}เท่านั้น`, c => c.color === x || c.color === y)),
+  L(1, "odd", "เลขคี่เท่านั้น (1, 3, 5)", c => c.number % 2 === 1), L(1, "even", "เลขคู่เท่านั้น (2, 4)", c => c.number % 2 === 0),
+  L(1, "many", "ไพ่ต้องมีสัตว์ 3 ตัวขึ้นไป", c => c.number >= 3), L(2, "few", "ไพ่ต้องมีสัตว์ไม่เกิน 2 ตัว", c => c.number <= 2),
+  L(1, "high", "เลข 4–5 เท่านั้น", c => c.number >= 4), L(1, "low", "เลข 1–3 เท่านั้น", c => c.number <= 3),
+  ...NUMS.map(n => L(1, "n" + n, `ไพ่เลข ${n} เท่านั้น`, c => c.number === n)),
+  ...NUMS.map(n => L(2, "nn" + n, `ไพ่ห้ามเป็นเลข ${n}`, c => c.number !== n)),
+  L(2, "mid", "เลข 2–4 เท่านั้น", c => c.number >= 2 && c.number <= 4), L(2, "edge", "เลข 1 หรือ 5 เท่านั้น", c => c.number === 1 || c.number === 5),
   ...ICONS.map(x => L(1, "a" + x, `ไพ่ตัว${x}เท่านั้น`, c => c.icon === x)),
-  L(1, "even", "เลขคู่เท่านั้น", c => c.number % 2 === 0), L(1, "odd", "เลขคี่เท่านั้น", c => c.number % 2 === 1),
-  L(2, "high", "เลข 4 ขึ้นไปเท่านั้น", c => c.number >= 4), L(2, "low", "เลข 1–3 เท่านั้น", c => c.number <= 3),
-  ...[1, 2, 3, 4, 5].map(n => L(2, "n" + n, `เลข ${n} เท่านั้น`, c => c.number === n)),
-  L(2, "warm", "สีโทนร้อน (แดง/เหลือง)", c => ["แดง", "เหลือง"].includes(c.color)),
-  L(2, "cool", "สีโทนเย็น (น้ำเงิน/เขียว)", c => ["น้ำเงิน", "เขียว"].includes(c.color)),
-  L(2, "furry", "ไพ่สัตว์มีขน (ไม่ใช่กบ)", c => c.icon !== "กบ"),
-  L(2, "edge", "เลข 1 หรือ 5 เท่านั้น", c => c.number === 1 || c.number === 5),
-  ...COLORS.map(x => L(3, "nc" + x, `ไม่ใช่สี${x}`, c => c.color !== x)),
-  L(3, "redstar", "สีแดงหรือรูปดาว", c => c.color === "แดง" || c.shape === "ดาว"),
-  L(3, "blueeven", "สีน้ำเงินหรือเลขคู่", c => c.color === "น้ำเงิน" || c.number % 2 === 0),
-  L(3, "catodd", "ไพ่แมวหรือเลขคี่", c => c.icon === "แมว" || c.number % 2 === 1),
-  L(3, "greeneven", "สีเขียวหรือเลขคู่", c => c.color === "เขียว" || c.number % 2 === 0),
-  L(3, "alt", "สีต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.color !== p.color)),
-  L(3, "up", "เลขต้องไม่น้อยกว่าใบก่อนหน้า", (c, p) => has(c, p, () => c.number >= p.number)),
-  L(3, "shp", "รูปทรงต้องต่างจากใบก่อนหน้า", (c, p) => has(c, p, () => c.shape !== p.shape)),
-  L(4, "ani", "สัตว์ต้องต่างจากใบก่อนหน้า", (c, p) => has(c, p, () => c.icon !== p.icon)),
-  L(4, "numd", "เลขต้องต่างจากใบก่อนหน้า", (c, p) => has(c, p, () => c.number !== p.number)),
-  L(4, "gt", "เลขต้องมากกว่าใบก่อนหน้า (ห้ามเท่า)", (c, p) => has(c, p, () => c.number > p.number)),
-  L(4, "zig", "สลับเลขคู่–คี่กับใบก่อนหน้า", (c, p) => has(c, p, () => (c.number + p.number) % 2 === 1)),
-  L(4, "samec", "สีเดียวกับใบก่อนหน้า หรือเลขเท่ากัน", (c, p) => has(c, p, () => c.color === p.color || c.number === p.number)),
-  L(4, "sume", "ผลรวมเลขกับใบก่อนหน้าเป็นเลขคู่", (c, p) => has(c, p, () => (c.number + p.number) % 2 === 0)),
-  L(4, "sum5", "ผลรวมเลขกับใบก่อนหน้ามากกว่า 5", (c, p) => has(c, p, () => c.number + p.number > 5)),
-  L(4, "sum6", "ผลรวมเลขกับใบก่อนหน้าไม่เกิน 6", (c, p) => has(c, p, () => c.number + p.number <= 6)),
-  L(5, "bday", "เลขบนไพ่ตรงกับตัวเลขในวันเกิดของ Rule Keeper", (c, p, x) => x.bd.includes(String(c.number)), x => x.bd.some(d => d >= 1 && d <= 5)),
-  L(5, "year", "เลขบนไพ่ตรงกับตัวเลขในปี ค.ศ. ปัจจุบัน", (c, p, x) => x.yr.includes(String(c.number)), x => x.yr.some(d => d >= 1 && d <= 5)),
-  L(5, "today", "เลขบนไพ่ตรงกับตัวเลขของวันที่วันนี้", (c, p, x) => x.dy.includes(String(c.number)), x => x.dy.some(d => d >= 1 && d <= 5)),
-  L(5, "np", "เลขไม่เกินจำนวนผู้เล่นในห้อง (ไม่นับ Rule Keeper)", (c, p, x) => c.number <= x.np),
-  L(5, "rainbow", "เลขเท่ากับลำดับสี (แดง1 เหลือง2 เขียว3 น้ำเงิน4)", c => c.number === ["แดง", "เหลือง", "เขียว", "น้ำเงิน"].indexOf(c.color) + 1),
-  L(5, "corner", "เลขเท่ากับจำนวนมุมของรูปทรง (สามเหลี่ยม3 สี่เหลี่ยม4 ดาว5)", c => c.number === { "สามเหลี่ยม": 3, "สี่เหลี่ยม": 4, "ดาว": 5 }[c.shape]),
+  ...ICONS.map(x => L(1, "na" + x, `ไพ่ห้ามเป็นตัว${x}`, c => c.icon !== x)),
+  ...pairs(ICONS).map(([x, y]) => L(2, "ap" + x + y, `ไพ่ตัว${x}หรือตัว${y}เท่านั้น`, c => c.icon === x || c.icon === y)),
+  L(1, "furry", "ไพ่สัตว์มีขนเท่านั้น (ไม่ใช่กบ)", c => c.icon !== "กบ"),
+  ...SHAPES.map(x => L(2, "s" + x, `ไพ่รูป${x}เท่านั้น`, c => c.shape === x)),
+  ...SHAPES.map(x => L(2, "ns" + x, `ไพ่ห้ามเป็นรูป${x}`, c => c.shape !== x)),
+  ...COLORS.flatMap(x => PAR.map(([n, v]) => L(2, `c${x}${n}`, `ไพ่สี${x} และเลข${n}`, c => c.color === x && c.number % 2 === v))),
+  ...ICONS.flatMap(x => PAR.map(([n, v]) => L(2, `a${x}${n}`, `ไพ่ตัว${x} และเลข${n}`, c => c.icon === x && c.number % 2 === v))),
+  ...COLORS.flatMap(x => PAR.map(([n, v]) => L(3, `oc${x}${n}`, `ไพ่สี${x} หรือเลข${n}`, c => c.color === x || c.number % 2 === v))),
+  ...ICONS.map(x => L(3, "oa" + x, `ไพ่ตัว${x} หรือเลขมากกว่า 3`, c => c.icon === x || c.number > 3)),
+  // ลำดับการวาง: ดูใบก่อนหน้าในแถว
+  L(1, "numd", "เลขต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.number !== p.number)),
+  L(2, "nums", "เลขต้องเท่ากับใบก่อนหน้า", (c, p) => has(c, p, () => c.number === p.number)),
+  L(1, "alt", "สีต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.color !== p.color)),
+  L(2, "samec", "สีต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.color === p.color)),
+  L(2, "ani", "สัตว์ต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.icon !== p.icon)),
+  L(2, "sami", "สัตว์ต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.icon === p.icon)),
+  L(3, "shp", "รูปทรงต้องไม่ซ้ำกับใบก่อนหน้า", (c, p) => has(c, p, () => c.shape !== p.shape)),
+  L(3, "sams", "รูปทรงต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.shape === p.shape)),
+  L(1, "up", "เลขต้องไม่น้อยกว่าใบก่อนหน้า", (c, p) => has(c, p, () => c.number >= p.number)),
+  L(1, "down", "เลขต้องไม่มากกว่าใบก่อนหน้า", (c, p) => has(c, p, () => c.number <= p.number)),
+  L(2, "gt", "เลขต้องมากกว่าใบก่อนหน้า (ห้ามเท่า)", (c, p) => has(c, p, () => c.number > p.number)),
+  L(2, "lt", "เลขต้องน้อยกว่าใบก่อนหน้า (ห้ามเท่า)", (c, p) => has(c, p, () => c.number < p.number)),
+  L(2, "zig", "สลับเลขคู่–คี่กับใบก่อนหน้า", (c, p) => has(c, p, () => (c.number + p.number) % 2 === 1)),
+  L(2, "samep", "เลขคู่/คี่ต้องเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => (c.number + p.number) % 2 === 0)),
+  L(3, "near", "เลขต้องต่างจากใบก่อนหน้าไม่เกิน 1", (c, p) => has(c, p, () => Math.abs(c.number - p.number) <= 1)),
+  L(3, "far", "เลขต้องต่างจากใบก่อนหน้าอย่างน้อย 2", (c, p) => has(c, p, () => Math.abs(c.number - p.number) >= 2)),
+  L(3, "sum5", "ผลรวมเลขกับใบก่อนหน้ามากกว่า 5", (c, p) => has(c, p, () => c.number + p.number > 5)),
+  L(3, "sum6", "ผลรวมเลขกับใบก่อนหน้าไม่เกิน 6", (c, p) => has(c, p, () => c.number + p.number <= 6)),
+  L(3, "uno", "สีเหมือนใบก่อนหน้า หรือเลขเหมือนใบก่อนหน้า", (c, p) => has(c, p, () => c.color === p.color || c.number === p.number)),
+  L(3, "altgt", "สีไม่ซ้ำใบก่อนหน้า และเลขมากกว่าใบก่อนหน้า", (c, p) => has(c, p, () => c.color !== p.color && c.number > p.number)),
+  L(3, "year", "เลขบนไพ่ตรงกับตัวเลขในปี ค.ศ. ปัจจุบัน", (c, p, x) => x.yr.includes(String(c.number)), x => x.yr.some(d => d >= 1 && d <= 5)),
 ];
 
 let uid = 0;
@@ -61,11 +75,12 @@ function next(r) {
   const o = order(r), i = o.findIndex(p => p.id === r.turn);
   for (let k = 1; k <= o.length; k++) { const p = o[(i + k) % o.length]; if (p.online) { r.turn = p.id; return; } }
 }
-function toGuess(r, p) { // ตัวเลือก 3 ข้อ: ของจริง + ตัวหลอก 2 (ไม่ซ้ำผลกับของจริง)
-  const D = makeDeck().slice(0, 20), same = o => D.every(c => D.every(q => fits(r, c, q) === o.test(c, q, r.ctx)));
-  const pool = RULES.filter(o => o.id !== r.rule.id && (!o.need || o.need(r.ctx)) && !same(o)).sort(() => Math.random() - .5);
-  const near = pool.filter(o => Math.abs(o.lv - r.rule.lv) <= 1);
-  r.choices = [r.rule, ...(near.length >= 2 ? near : pool).slice(0, 2)].sort(() => Math.random() - .5).map(o => ({ id: o.id, label: o.label }));
+function toGuess(r, p) { // ตัวเลือก 3 ข้อ: กฎจริง + ตัวหลอก 2 ข้อที่ "พฤติกรรมใกล้เคียงกฎจริงที่สุด" (แต่ไม่เหมือนกันทุกกรณี)
+  const D = makeDeck(), pv = i => D[(i + 7) % D.length];
+  const agree = o => D.filter((c, i) => fits(r, c, pv(i)) === o.test(c, pv(i), r.ctx)).length;
+  const pool = RULES.filter(o => o.id !== r.rule.id && (!o.need || o.need(r.ctx))).sort(() => Math.random() - .5)
+    .map(o => ({ o, s: agree(o) })).filter(x => x.s < D.length).sort((a, b) => b.s - a.s);
+  r.choices = [r.rule, ...pool.slice(0, 2).map(x => x.o)].sort(() => Math.random() - .5).map(o => ({ id: o.id, label: o.label }));
   r.phase = "guess"; say(r, `🃏 ${p.name} ไพ่หมดมือ! ถึงเวลาทายกฎ`);
 }
 function send(r) {
@@ -98,16 +113,13 @@ io.on("connection", s => {
     if (r.hostId !== s.id) return cb({ ok: false, error: "เฉพาะ Rule Keeper เริ่มเกมได้" });
     if (r.players.size < 2) return cb({ ok: false, error: "ต้องมีผู้เล่นอย่างน้อย 2 คน" });
     const dig = t => [...String(t)].filter(ch => /\d/.test(ch)).map(Number), now = new Date();
-    r.ctx = { bd: dig(d.bd).map(String), yr: dig(now.getFullYear()).map(String), dy: dig(now.getDate()).map(String), np: r.players.size - 1 };
-    const num = a => a.map(Number); r.ctx.bd = r.ctx.bd; // เก็บเป็นสตริงเพื่อใช้ includes
-    const x = { ...r.ctx, bd: num(r.ctx.bd), yr: num(r.ctx.yr), dy: num(r.ctx.dy) };
-    const lv = Math.min(5, Math.max(1, +d.lv || 1));
-    const pool = RULES.filter(o => o.lv === lv && (!o.need || o.need(x)));
+    r.ctx = { yr: dig(now.getFullYear()).map(String) };
+    const pool = RULES.filter(o => !o.need || o.need(r.ctx));  // สุ่มจากทุกกฎเท่าๆ กัน
     r.rule = pool[Math.floor(Math.random() * pool.length)]; r.deck = makeDeck(); r.winner = null; r.winnerId = null; r.log = [];
     const i = r.deck.findIndex(c => fits(r, c, null)); r.line = r.deck.splice(i, 1);
     for (const q of r.players.values()) { q.hand = []; if (q.id !== r.hostId) draw(r, q, 7); }
     r.phase = "playing"; r.turn = order(r)[0].id;
-    say(r, `เริ่มเกม ระดับ ${lv}! Rule Keeper วางไพ่ใบแรกที่ตรงกับกฎลับแล้ว`); cb({ ok: true });
+    say(r, `เริ่มเกม! Rule Keeper วางไพ่ใบแรกที่ตรงกับกฎลับแล้ว`); cb({ ok: true });
   }));
 
   s.on("play", act((r, p, { ids = [] }, cb) => {
